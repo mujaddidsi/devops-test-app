@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: devops-test-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: devops-test-app
+  template:
+    metadata:
+      labels:
+        app: devops-test-app
+    spec:
+      containers:
+        - name: app
+          image: mujaddidsi/devops-test-app:latest
+          ports:
+            - containerPort: 3000
