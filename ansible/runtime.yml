@@ -1,0 +1,46 @@
+---
+- name: Provision runtime environment
+  hosts: app_servers
+  become: yes
+
+  vars:
+    node_version: "18"
+    pm2_startup_user: ubuntu
+    pm2_startup_home: /home/ubuntu
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Install base packages
+      apt:
+        name:
+          - curl
+          - git
+        state: present
+
+    - name: Add NodeSource repository (Node.js {{ node_version }} LTS)
+      shell: curl -fsSL https://deb.nodesource.com/setup_{{ node_version }}.x | bash -
+      args:
+        executable: /bin/bash
+        creates: /etc/apt/sources.list.d/nodesource.list
+
+    - name: Install Node.js
+      apt:
+        name: nodejs
+        state: present
+
+    - name: Install PM2 globally
+      npm:
+        name: pm2
+        global: yes
+        state: present
+
+    - name: Setup PM2 startup service for {{ pm2_startup_user }}
+      shell: pm2 startup systemd -u {{ pm2_startup_user }} --hp {{ pm2_startup_home }}
+      args:
+        executable: /bin/bash
+      register: pm2_startup_output
+      changed_when: "'already installed' not in pm2_startup_output.stdout"

@@ -1,0 +1,56 @@
+---
+- name: Deploy Node.js application
+  hosts: app_servers
+  become: yes
+
+  vars:
+    app_dir: /home/ubuntu/app
+    repo_url: https://github.com/mujaddidsi/devops-test-app.git
+    repo_branch: main
+    app_name: devops-test-app
+    app_entry: index.js
+    app_port: 3000
+    app_user: ubuntu
+
+  tasks:
+    - name: Ensure app directory exists with correct ownership
+      file:
+        path: "{{ app_dir }}"
+        state: directory
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        mode: "0755"
+
+    - name: Clone or update application repository
+      git:
+        repo: "{{ repo_url }}"
+        dest: "{{ app_dir }}"
+        version: "{{ repo_branch }}"
+        force: yes
+      become_user: "{{ app_user }}"
+
+    - name: Install npm production dependencies
+      npm:
+        path: "{{ app_dir }}"
+        production: yes
+        state: present
+      become_user: "{{ app_user }}"
+
+    - name: Stop existing PM2 process (if running)
+      shell: pm2 delete "{{ app_name }}"
+      become_user: "{{ app_user }}"
+      ignore_errors: yes
+      changed_when: false
+
+    - name: Start application with PM2
+      shell: pm2 start "{{ app_entry }}" --name "{{ app_name }}"
+      args:
+        chdir: "{{ app_dir }}"
+      environment:
+        PORT: "{{ app_port }}"
+      become_user: "{{ app_user }}"
+
+    - name: Save PM2 process list
+      shell: pm2 save
+      become_user: "{{ app_user }}"
+      changed_when: false
