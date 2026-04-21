@@ -5,7 +5,7 @@
 
   vars:
     app_dir: /home/ubuntu/app
-    repo_url: https://github.com/mujaddidsi/devops-test-app.git
+    repo_url: https://github.com/mujaddidsi/node-ansible-k8s-deployment.git
     repo_branch: main
     app_name: devops-test-app
     app_entry: index.js
